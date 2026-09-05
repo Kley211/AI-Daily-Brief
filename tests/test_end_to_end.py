@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from ai_daily_brief.config import Settings
 from ai_daily_brief.enrichment import RuleBasedEnricher
 from ai_daily_brief.pipeline import build_daily_report
@@ -13,3 +15,13 @@ def test_build_daily_report_runs_full_in_memory_flow(monkeypatch):
 
     assert len(report.entries) == 1
     assert report.entries[0].enrichment.category == "models"
+
+
+def test_build_daily_report_filters_old_items(monkeypatch):
+    old = RawItem("openai_blog", "old", "Old model", "https://example.com/old", datetime.now(timezone.utc) - timedelta(days=2), "old")
+    monkeypatch.setattr("ai_daily_brief.pipeline.fetch_sources", lambda: [old])
+    monkeypatch.setattr("ai_daily_brief.pipeline.enricher_from_env", lambda: RuleBasedEnricher())
+
+    report = build_daily_report(Settings(lookback_hours=1, max_digest_items=5))
+
+    assert len(report.entries) == 0

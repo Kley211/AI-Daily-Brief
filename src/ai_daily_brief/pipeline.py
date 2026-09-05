@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+import os
 
 from .config import Settings
 from .digest import DigestReport, build_report
@@ -56,6 +58,19 @@ def fetch_sources() -> list[RawItem]:
 def build_daily_report(settings: Settings) -> DigestReport:
     """Run fetching and processing, returning a report ready to render or send."""
     raw_items = fetch_sources()
+    fetched_count = len(raw_items)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=settings.lookback_hours)
+    recent_items = [
+        item for item in raw_items
+        if item.published_at is None or item.published_at >= cutoff
+    ]
+    max_candidates = int(os.getenv("AI_BRIEF_MAX_CANDIDATES", "100"))
+    raw_items = sorted(
+        recent_items,
+        key=lambda item: item.published_at or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )[:max_candidates]
+    logger.info("stage=filter raw_count=%s recent_count=%s candidate_count=%s", fetched_count, len(recent_items), len(raw_items))
     unique_items = deduplicate_items(raw_items)
     events = cluster_events(unique_items)
     enriched = enrich_events(events, enricher_from_env())
