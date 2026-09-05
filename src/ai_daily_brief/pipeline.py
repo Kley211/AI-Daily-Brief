@@ -6,7 +6,16 @@ import logging
 from dataclasses import dataclass
 
 from .config import Settings
-from .sources import AnthropicBlogAdapter, OpenAIBlogAdapter, RawItem
+from .sources import (
+    AnthropicBlogAdapter,
+    HackerNewsAIAdapter,
+    HuggingFaceAdapter,
+    LangChainAdapter,
+    LlamaIndexAdapter,
+    OpenAIBlogAdapter,
+    RawItem,
+    RedditLocalLlamaAdapter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +30,16 @@ class RunResult:
 def fetch_sources() -> list[RawItem]:
     """Fetch the official sources currently implemented in the MVP."""
     items: list[RawItem] = []
-    for adapter in (OpenAIBlogAdapter(), AnthropicBlogAdapter()):
+    adapters = (
+        OpenAIBlogAdapter(),
+        AnthropicBlogAdapter(),
+        HuggingFaceAdapter(),
+        LangChainAdapter(),
+        LlamaIndexAdapter(),
+        RedditLocalLlamaAdapter(),
+        HackerNewsAIAdapter(),
+    )
+    for adapter in adapters:
         try:
             fetched = adapter.fetch()
         except Exception:

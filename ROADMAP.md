@@ -241,6 +241,7 @@
 ## 14. 当前进度
 
 - `[x]` 阶段 0：项目初始化（Python 骨架、配置、日志、CLI、测试）
-- `[-]` 阶段 1：来源接入（已完成 OpenAI Blog、Anthropic Blog；其余来源待接入）
+- `[x]` 阶段 1：来源接入（7 个来源适配器已完成）
+- `[ ]` 阶段 2：清洗与去重
 
-下一步扩展 Hugging Face、LangChain、LlamaIndex、Reddit `r/LocalLLaMA` 和 Hacker News AI。
+下一步实现 URL 规范化、内容哈希、标题相似度和事件聚类。
