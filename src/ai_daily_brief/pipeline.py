@@ -72,7 +72,7 @@ def build_daily_report(settings: Settings) -> DigestReport:
     )[:max_candidates]
     logger.info("stage=filter raw_count=%s recent_count=%s candidate_count=%s", fetched_count, len(recent_items), len(raw_items))
     unique_items = deduplicate_items(raw_items)
-    events = cluster_events(unique_items)
+    events = cluster_events(unique_items)[: settings.max_digest_items]
     enriched = enrich_events(events, enricher_from_env())
     for value in enriched:
         validate_enrichment(value)
