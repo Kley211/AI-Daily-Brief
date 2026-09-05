@@ -9,3 +9,5 @@ build/
 *.egg-info/
 data/*.db
 data/*.sqlite*
+data/latest_digest.html
+data/latest_digest.txt

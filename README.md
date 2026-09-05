@@ -21,9 +21,11 @@ ai-brief run
 ai-brief fetch
 ai-brief process
 ai-brief digest
+ai-brief preview
+ai-brief send
 ```
 
-阶段 0 中上述命令执行占位流程并输出结构化日志；来源抓取、AI 处理和邮件发送将在后续阶段实现。
+`preview` 会生成 `data/latest_digest.html` 和 `data/latest_digest.txt`；`send` 会在配置 SMTP 后发送日报；`run` 执行完整流水线但不发送邮件。
 
 ## LLM 配置
 

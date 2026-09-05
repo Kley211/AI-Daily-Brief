@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 
 from .config import Settings
+from .digest import DigestReport, build_report
 from .enrichment import enrich_events, enricher_from_env, validate_enrichment
 from .processing import cluster_events, deduplicate_items
 from .sources import (
@@ -52,6 +53,21 @@ def fetch_sources() -> list[RawItem]:
     return items
 
 
+def build_daily_report(settings: Settings) -> DigestReport:
+    """Run fetching and processing, returning a report ready to render or send."""
+    raw_items = fetch_sources()
+    unique_items = deduplicate_items(raw_items)
+    events = cluster_events(unique_items)
+    enriched = enrich_events(events, enricher_from_env())
+    for value in enriched:
+        validate_enrichment(value)
+    logger.info(
+        "stage=process status=completed raw_count=%s unique_count=%s event_count=%s enriched_count=%s",
+        len(raw_items), len(unique_items), len(events), len(enriched),
+    )
+    return build_report(events, enriched, settings.max_digest_items)
+
+
 def run_stage(stage: str, settings: Settings) -> RunResult:
     """Run a named pipeline stage."""
     valid_stages = {"fetch", "process", "digest"}
@@ -69,18 +85,9 @@ def run_stage(stage: str, settings: Settings) -> RunResult:
 
 def run_pipeline(settings: Settings) -> list[RunResult]:
     """Run the in-memory MVP pipeline in stage order."""
-    raw_items = fetch_sources()
-    unique_items = deduplicate_items(raw_items)
-    events = cluster_events(unique_items)
-    enriched = enrich_events(events, enricher_from_env())
-    for value in enriched:
-        validate_enrichment(value)
-    logger.info(
-        "stage=process status=completed raw_count=%s unique_count=%s event_count=%s enriched_count=%s",
-        len(raw_items), len(unique_items), len(events), len(enriched),
-    )
+    report = build_daily_report(settings)
     return [
-        RunResult(stage="fetch", status="completed", item_count=len(raw_items)),
-        RunResult(stage="process", status="completed", item_count=len(enriched)),
-        run_stage("digest", settings),
+        RunResult(stage="fetch", status="completed"),
+        RunResult(stage="process", status="completed", item_count=len(report.entries)),
+        RunResult(stage="digest", status="completed", item_count=len(report.entries)),
     ]
