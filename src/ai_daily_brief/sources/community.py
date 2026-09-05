@@ -43,12 +43,16 @@ class HuggingFaceAdapter(_RssAdapter):
 
 class LangChainAdapter(_RssAdapter):
     source_id = "langchain"
-    default_url = "https://blog.langchain.dev/rss/"
+    default_url = "https://blog.langchain.dev/rss.xml"
 
 
 class LlamaIndexAdapter(_RssAdapter):
     source_id = "llamaindex"
-    default_url = "https://www.llamaindex.ai/blog/rss.xml"
+    default_url = "https://www.llamaindex.ai/blog"
+
+    def fetch(self) -> list[RawItem]:
+        from .html import load_listing
+        return load_listing(self.feed_url, self.source_id, r"/blog/")
 
 
 class RedditLocalLlamaAdapter(_RssAdapter):

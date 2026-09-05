@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 from .base import RawItem
+from .html import load_listing
 from .rss import load_feed
 
 
@@ -28,4 +29,7 @@ class OpenAIBlogAdapter(_OfficialBlogAdapter):
 
 class AnthropicBlogAdapter(_OfficialBlogAdapter):
     source_id = "anthropic_blog"
-    default_url = "https://www.anthropic.com/rss.xml"
+    default_url = "https://www.anthropic.com/news"
+
+    def fetch(self) -> list[RawItem]:
+        return load_listing(self.feed_url, self.source_id, r"/news/")
