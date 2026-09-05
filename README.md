@@ -41,6 +41,23 @@ powershell -ExecutionPolicy Bypass -File .\scripts\register_daily_task.ps1 -Time
 schtasks.exe /Delete /TN "AI Daily Brief" /F
 ```
 
+## GitHub Actions 部署
+
+GitHub Actions 不依赖本地电脑开机。将仓库推送到 GitHub 后，在仓库的 `Settings -> Secrets and variables -> Actions` 中新增以下 Repository secrets：
+
+```text
+AI_BRIEF_MODEL_API_KEY
+AI_BRIEF_MODEL_NAME       （可选，默认 deepseek-chat）
+AI_BRIEF_RECIPIENT
+AI_BRIEF_SMTP_HOST
+AI_BRIEF_SMTP_PORT        （可选，默认 587）
+AI_BRIEF_SMTP_USERNAME
+AI_BRIEF_SMTP_PASSWORD
+AI_BRIEF_SMTP_FROM
+```
+
+工作流文件为 `.github/workflows/daily-brief.yml`，每天北京时间 08:00 自动运行，也可以在 GitHub Actions 页面点击 `Run workflow` 手动测试。GitHub 的定时任务可能有几分钟延迟。
+
 ## LLM 配置
 
 默认使用离线规则处理；填写 API Key 后自动使用 DeepSeek。DeepSeek endpoint 已内置，不需要填写 URL：

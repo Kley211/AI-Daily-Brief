@@ -1,0 +1,45 @@
+name: Daily AI Brief
+
+on:
+  schedule:
+    # 00:00 UTC = 08:00 Asia/Shanghai
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send-brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AI_BRIEF_TIMEZONE: Asia/Shanghai
+      AI_BRIEF_SEND_TIME: "08:00"
+      AI_BRIEF_LOOKBACK_HOURS: "24"
+      AI_BRIEF_MAX_DIGEST_ITEMS: "10"
+      AI_BRIEF_SOURCE_RETRIES: "2"
+      AI_BRIEF_MODEL_PROVIDER: deepseek
+      AI_BRIEF_MODEL_NAME: ${{ secrets.AI_BRIEF_MODEL_NAME || 'deepseek-chat' }}
+      AI_BRIEF_MODEL_API_KEY: ${{ secrets.AI_BRIEF_MODEL_API_KEY }}
+      AI_BRIEF_RECIPIENT: ${{ secrets.AI_BRIEF_RECIPIENT }}
+      AI_BRIEF_SMTP_HOST: ${{ secrets.AI_BRIEF_SMTP_HOST }}
+      AI_BRIEF_SMTP_PORT: ${{ secrets.AI_BRIEF_SMTP_PORT || '587' }}
+      AI_BRIEF_SMTP_USERNAME: ${{ secrets.AI_BRIEF_SMTP_USERNAME }}
+      AI_BRIEF_SMTP_PASSWORD: ${{ secrets.AI_BRIEF_SMTP_PASSWORD }}
+      AI_BRIEF_SMTP_FROM: ${{ secrets.AI_BRIEF_SMTP_FROM }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install project
+        run: python -m pip install .
+
+      - name: Send daily brief
+        run: python -m ai_daily_brief.cli send

@@ -246,5 +246,6 @@
 - `[x]` 阶段 3：AI 处理（结构化输出、离线规则 provider、DeepSeek/Qwen provider 已完成）
 - `[-]` 阶段 4：日报与邮件（端到端预览和 SMTP 发送命令已完成，待配置 SMTP 实测）
 - `[-]` 阶段 5：定时与可靠性（来源重试、Windows 定时任务脚本和运行日志已完成）
+- `[-]` 阶段 5：GitHub Actions 部署（每日定时 workflow 和 Secrets 配置说明已完成）
 
-下一步确认一次非空日报送达，并观察定时任务日志。
+下一步将仓库推送到 GitHub，配置 Secrets，并手动触发 workflow 验证非空日报送达。
