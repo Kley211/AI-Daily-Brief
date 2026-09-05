@@ -10,8 +10,8 @@ def test_pipeline_runs_stages_in_order(monkeypatch):
     results = run_pipeline(Settings())
 
     assert [result.stage for result in results] == ["fetch", "process", "digest"]
-    assert results[0].status == "completed"
-    assert all(result.status == "planned" for result in results[1:])
+    assert all(result.status == "completed" for result in results[:2])
+    assert results[2].status == "planned"
 
 
 def test_unknown_stage_is_rejected():

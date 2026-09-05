@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 
 from .config import Settings
+from .processing import cluster_events, deduplicate_items
 from .sources import (
     AnthropicBlogAdapter,
     HackerNewsAIAdapter,
@@ -66,5 +67,16 @@ def run_stage(stage: str, settings: Settings) -> RunResult:
 
 
 def run_pipeline(settings: Settings) -> list[RunResult]:
-    """Run all stages in order; later stages will replace these placeholders."""
-    return [run_stage(stage, settings) for stage in ("fetch", "process", "digest")]
+    """Run the in-memory MVP pipeline in stage order."""
+    raw_items = fetch_sources()
+    unique_items = deduplicate_items(raw_items)
+    events = cluster_events(unique_items)
+    logger.info(
+        "stage=process status=completed raw_count=%s unique_count=%s event_count=%s",
+        len(raw_items), len(unique_items), len(events),
+    )
+    return [
+        RunResult(stage="fetch", status="completed", item_count=len(raw_items)),
+        RunResult(stage="process", status="completed", item_count=len(events)),
+        run_stage("digest", settings),
+    ]
