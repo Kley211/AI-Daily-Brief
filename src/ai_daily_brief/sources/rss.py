@@ -11,6 +11,7 @@ from email.utils import parsedate_to_datetime
 from typing import Callable
 
 from .base import RawItem
+from ..tls import default_context
 
 _TAG_RE = re.compile(r"<[^>]+>")
 
@@ -20,7 +21,7 @@ def fetch_xml(url: str, timeout: int = 20) -> bytes:
         url,
         headers={"User-Agent": "ai-daily-brief/0.1 (+public-feed-reader)"},
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    with urllib.request.urlopen(request, timeout=timeout, context=default_context()) as response:
         return response.read()
 
 

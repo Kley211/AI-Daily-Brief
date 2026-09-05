@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from .base import RawItem
+from ..tls import default_context
 from .rss import load_feed
 
 
@@ -18,7 +19,7 @@ def fetch_json(url: str, timeout: int = 20) -> dict:
         url,
         headers={"User-Agent": "ai-daily-brief/0.1 (+public-feed-reader)"},
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
+    with urllib.request.urlopen(request, timeout=timeout, context=default_context()) as response:
         return json.loads(response.read())
 
 

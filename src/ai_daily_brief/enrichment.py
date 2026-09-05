@@ -11,6 +11,7 @@ from typing import Protocol
 
 from .processing import EventCluster
 from .config import load_dotenv
+from .tls import default_context
 
 
 @dataclass(frozen=True)
@@ -139,7 +140,7 @@ class OpenAICompatibleEnricher:
             },
             method="POST",
         )
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+        with urllib.request.urlopen(request, timeout=self.timeout, context=default_context()) as response:
             body = json.loads(response.read())
         content = body["choices"][0]["message"]["content"]
         content = content.strip().removeprefix("```json").removesuffix("```").strip()
