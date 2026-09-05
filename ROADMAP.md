@@ -241,6 +241,6 @@
 ## 14. 当前进度
 
 - `[x]` 阶段 0：项目初始化（Python 骨架、配置、日志、CLI、测试）
-- `[ ]` 阶段 1：来源接入
+- `[-]` 阶段 1：来源接入（已完成 OpenAI Blog、Anthropic Blog；其余来源待接入）
 
-下一步从 OpenAI Blog 和 Anthropic Blog 两个官方来源开始，先验证统一 `SourceAdapter` 接口，再扩展到其余 5 个来源。
+下一步扩展 Hugging Face、LangChain、LlamaIndex、Reddit `r/LocalLLaMA` 和 Hacker News AI。
