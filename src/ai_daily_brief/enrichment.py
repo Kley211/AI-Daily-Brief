@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import re
+import json
+import os
+import urllib.request
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -88,8 +91,96 @@ class RuleBasedEnricher:
         )
 
 
+class OpenAICompatibleEnricher:
+    """LLM provider for DeepSeek, Qwen, and compatible chat APIs."""
+
+    def __init__(
+        self,
+        endpoint: str,
+        api_key: str,
+        model: str,
+        timeout: int = 60,
+    ) -> None:
+        self.endpoint = endpoint
+        self.api_key = api_key
+        self.model = model
+        self.timeout = timeout
+
+    def enrich(self, event: EventCluster) -> EnrichedEvent:
+        item = event.canonical
+        prompt = {
+            "title": item.title,
+            "excerpt": item.content_excerpt,
+            "source": item.source_id,
+            "source_count": event.source_count,
+        }
+        schema = (
+            "Return JSON only with keys: category (models|products|opensource|infra|research|policy|community), "
+            "summary, why_it_matters, importance (high|medium|low), confidence "
+            "(official|multi_source|single_source|community|unconfirmed), entities (array), "
+            "claims (array), needs_review (boolean). Do not invent facts."
+        )
+        payload = {
+            "model": self.model,
+            "temperature": 0.1,
+            "messages": [
+                {"role": "system", "content": "You are a careful AI news analyst. " + schema},
+                {"role": "user", "content": json.dumps(prompt, ensure_ascii=False)},
+            ],
+        }
+        request = urllib.request.Request(
+            self.endpoint,
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "ai-daily-brief/0.1",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            body = json.loads(response.read())
+        content = body["choices"][0]["message"]["content"]
+        content = content.strip().removeprefix("```json").removesuffix("```").strip()
+        value = json.loads(content)
+        result = EnrichedEvent(
+            category=value["category"],
+            summary=value["summary"],
+            why_it_matters=value["why_it_matters"],
+            importance=value["importance"],
+            confidence=value["confidence"],
+            entities=tuple(value.get("entities", [])),
+            claims=tuple(value.get("claims", [])),
+            needs_review=bool(value.get("needs_review", False)),
+        )
+        validate_enrichment(result)
+        return result
+
+
+def enricher_from_env() -> Enricher:
+    """Select a configured LLM, falling back safely to offline mode."""
+    provider = os.getenv("AI_BRIEF_MODEL_PROVIDER", "rule_based").lower()
+    api_key = os.getenv("AI_BRIEF_MODEL_API_KEY", "")
+    if provider == "deepseek" and api_key:
+        return OpenAICompatibleEnricher(
+            endpoint=os.getenv("AI_BRIEF_MODEL_ENDPOINT", "https://api.deepseek.com/chat/completions"),
+            api_key=api_key,
+            model=os.getenv("AI_BRIEF_MODEL_NAME", "deepseek-chat"),
+        )
+    if provider == "qwen" and api_key:
+        return OpenAICompatibleEnricher(
+            endpoint=os.getenv(
+                "AI_BRIEF_MODEL_ENDPOINT",
+                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+            ),
+            api_key=api_key,
+            model=os.getenv("AI_BRIEF_MODEL_NAME", "qwen-plus"),
+        )
+    return RuleBasedEnricher()
+
+
 def enrich_events(events: list[EventCluster], enricher: Enricher | None = None) -> list[EnrichedEvent]:
-    provider = enricher or RuleBasedEnricher()
+    provider = enricher or enricher_from_env()
     return [provider.enrich(event) for event in events]
 
 
