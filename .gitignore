@@ -11,3 +11,4 @@ data/*.db
 data/*.sqlite*
 data/latest_digest.html
 data/latest_digest.txt
+data/daily_run.log

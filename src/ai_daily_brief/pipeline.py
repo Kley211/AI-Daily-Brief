@@ -6,6 +6,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import os
+import time
 
 from .config import Settings
 from .digest import DigestReport, build_report
@@ -44,11 +45,20 @@ def fetch_sources() -> list[RawItem]:
         RedditLocalLlamaAdapter(),
         HackerNewsAIAdapter(),
     )
+    retries = int(os.getenv("AI_BRIEF_SOURCE_RETRIES", "2"))
     for adapter in adapters:
-        try:
-            fetched = adapter.fetch()
-        except Exception:
-            logger.exception("source=%s status=failed", adapter.source_id)
+        fetched = None
+        for attempt in range(retries + 1):
+            try:
+                fetched = adapter.fetch()
+                break
+            except Exception:
+                if attempt >= retries:
+                    logger.exception("source=%s status=failed attempts=%s", adapter.source_id, attempt + 1)
+                else:
+                    logger.warning("source=%s status=retry attempt=%s", adapter.source_id, attempt + 1)
+                    time.sleep(min(2 ** attempt, 5))
+        if fetched is None:
             continue
         logger.info("source=%s status=ok item_count=%s", adapter.source_id, len(fetched))
         items.extend(fetched)
