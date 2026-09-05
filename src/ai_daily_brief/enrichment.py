@@ -145,14 +145,16 @@ class OpenAICompatibleEnricher:
         content = body["choices"][0]["message"]["content"]
         content = content.strip().removeprefix("```json").removesuffix("```").strip()
         value = json.loads(content)
+        summary = value.get("summary") or item.content_excerpt or item.title
+        claims = tuple(value.get("claims") or [item.title])
         result = EnrichedEvent(
             category=value["category"],
-            summary=value["summary"],
-            why_it_matters=value["why_it_matters"],
+            summary=summary,
+            why_it_matters=value.get("why_it_matters") or "需要结合原始来源继续关注。",
             importance=value["importance"],
             confidence=value["confidence"],
             entities=tuple(value.get("entities", [])),
-            claims=tuple(value.get("claims", [])),
+            claims=claims,
             needs_review=bool(value.get("needs_review", False)),
         )
         validate_enrichment(result)

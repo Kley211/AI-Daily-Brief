@@ -48,3 +48,23 @@ def test_deepseek_defaults_to_built_in_endpoint(monkeypatch):
     assert isinstance(provider, OpenAICompatibleEnricher)
     assert provider.endpoint == "https://api.deepseek.com/chat/completions"
     assert provider.model == "deepseek-chat"
+
+
+def test_provider_falls_back_when_model_omits_summary_or_claims(monkeypatch):
+    item = RawItem("openai_blog", "1", "Original title", "https://example.com", None, "Original excerpt")
+    event = EventCluster(item, (item,))
+    response = {"choices": [{"message": {"content": json.dumps({
+        "category": "models", "summary": "", "why_it_matters": "", "importance": "medium",
+        "confidence": "official", "entities": [], "claims": [], "needs_review": False,
+    })}}]}
+
+    class FakeResponse:
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def read(self): return json.dumps(response).encode()
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda *args, **kwargs: FakeResponse())
+    result = OpenAICompatibleEnricher("https://example.test", "key", "test-model").enrich(event)
+
+    assert result.summary == "Original excerpt"
+    assert result.claims == ("Original title",)
