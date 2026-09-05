@@ -27,21 +27,15 @@ ai-brief digest
 
 ## LLM 配置
 
-默认使用离线规则处理，不需要 API Key。配置 DeepSeek：
+默认使用离线规则处理；填写 API Key 后自动使用 DeepSeek。DeepSeek endpoint 已内置，不需要填写 URL：
 
 ```text
 AI_BRIEF_MODEL_PROVIDER=deepseek
 AI_BRIEF_MODEL_API_KEY=your-key
 AI_BRIEF_MODEL_NAME=deepseek-chat
+# AI_BRIEF_MODEL_ENDPOINT 留空，使用内置默认地址
 ```
 
-切换 Qwen：
-
-```text
-AI_BRIEF_MODEL_PROVIDER=qwen
-AI_BRIEF_MODEL_API_KEY=your-key
-AI_BRIEF_MODEL_NAME=qwen-plus
-```
 
 ## 测试
 

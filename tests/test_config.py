@@ -11,7 +11,7 @@ def test_settings_use_defaults(monkeypatch):
         "AI_BRIEF_MAX_DIGEST_ITEMS",
         "AI_BRIEF_RECIPIENT",
     ):
-        monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv(name, "")
 
     settings = Settings.from_env()
 

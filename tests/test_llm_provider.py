@@ -1,6 +1,7 @@
 import json
 
 from ai_daily_brief.enrichment import OpenAICompatibleEnricher
+from ai_daily_brief.enrichment import enricher_from_env
 from ai_daily_brief.processing import EventCluster
 from ai_daily_brief.sources import RawItem
 
@@ -34,3 +35,16 @@ def test_openai_compatible_provider_parses_structured_response(monkeypatch):
 
     assert result.category == "models"
     assert result.entities == ("OpenAI",)
+
+
+def test_deepseek_defaults_to_built_in_endpoint(monkeypatch):
+    monkeypatch.setenv("AI_BRIEF_MODEL_API_KEY", "test-key")
+    monkeypatch.setenv("AI_BRIEF_MODEL_NAME", "")
+    monkeypatch.delenv("AI_BRIEF_MODEL_PROVIDER", raising=False)
+    monkeypatch.delenv("AI_BRIEF_MODEL_ENDPOINT", raising=False)
+
+    provider = enricher_from_env()
+
+    assert isinstance(provider, OpenAICompatibleEnricher)
+    assert provider.endpoint == "https://api.deepseek.com/chat/completions"
+    assert provider.model == "deepseek-chat"

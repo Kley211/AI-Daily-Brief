@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from .processing import EventCluster
+from .config import load_dotenv
 
 
 @dataclass(frozen=True)
@@ -159,28 +160,28 @@ class OpenAICompatibleEnricher:
 
 def enricher_from_env() -> Enricher:
     """Select a configured LLM, falling back safely to offline mode."""
-    provider = os.getenv("AI_BRIEF_MODEL_PROVIDER", "rule_based").lower()
+    load_dotenv()
     api_key = os.getenv("AI_BRIEF_MODEL_API_KEY", "")
+    provider = os.getenv("AI_BRIEF_MODEL_PROVIDER", "deepseek" if api_key else "rule_based").lower()
     if provider == "deepseek" and api_key:
         return OpenAICompatibleEnricher(
-            endpoint=os.getenv("AI_BRIEF_MODEL_ENDPOINT", "https://api.deepseek.com/chat/completions"),
+            endpoint=os.getenv("AI_BRIEF_MODEL_ENDPOINT") or "https://api.deepseek.com/chat/completions",
             api_key=api_key,
-            model=os.getenv("AI_BRIEF_MODEL_NAME", "deepseek-chat"),
+            model=os.getenv("AI_BRIEF_MODEL_NAME") or "deepseek-chat",
         )
     if provider == "qwen" and api_key:
         return OpenAICompatibleEnricher(
             endpoint=os.getenv(
-                "AI_BRIEF_MODEL_ENDPOINT",
-                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-            ),
+                "AI_BRIEF_MODEL_ENDPOINT"
+            ) or "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
             api_key=api_key,
-            model=os.getenv("AI_BRIEF_MODEL_NAME", "qwen-plus"),
+            model=os.getenv("AI_BRIEF_MODEL_NAME") or "qwen-plus",
         )
     return RuleBasedEnricher()
 
 
 def enrich_events(events: list[EventCluster], enricher: Enricher | None = None) -> list[EnrichedEvent]:
-    provider = enricher or enricher_from_env()
+    provider = enricher or RuleBasedEnricher()
     return [provider.enrich(event) for event in events]
 
 

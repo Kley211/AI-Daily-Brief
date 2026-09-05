@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 
 from .config import Settings
-from .enrichment import enrich_events, validate_enrichment
+from .enrichment import enrich_events, enricher_from_env, validate_enrichment
 from .processing import cluster_events, deduplicate_items
 from .sources import (
     AnthropicBlogAdapter,
@@ -72,7 +72,7 @@ def run_pipeline(settings: Settings) -> list[RunResult]:
     raw_items = fetch_sources()
     unique_items = deduplicate_items(raw_items)
     events = cluster_events(unique_items)
-    enriched = enrich_events(events)
+    enriched = enrich_events(events, enricher_from_env())
     for value in enriched:
         validate_enrichment(value)
     logger.info(
